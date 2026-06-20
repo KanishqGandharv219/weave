@@ -1,0 +1,81 @@
+// Weave Protocol Buffer Definitions
+// Defines the wire format for coordinator ↔ daemon communication
+// and daemon ↔ daemon activation passing.
+//
+// Phase 1: Basic job assignment + result messages
+// Phase 2: Activation vectors, shard descriptors, verification hashes
+
+syntax = "proto3";
+
+package weave.v1;
+
+// ── Node Registration ───────────────────────
+
+message DeviceProfile {
+  string node_id = 1;
+  string hostname = 2;
+  string os = 3;
+  uint32 cpu_cores = 4;
+  string cpu_brand = 5;
+  double total_ram_gb = 6;
+  double available_ram_gb = 7;
+  optional GpuInfo gpu = 8;
+  double bandwidth_mbps = 9;  // Measured upload bandwidth
+}
+
+message GpuInfo {
+  string name = 1;
+  double vram_gb = 2;
+  string backend = 3;  // "cuda", "mlx", "vulkan", "cpu_only"
+}
+
+message RegisterNodeRequest {
+  DeviceProfile profile = 1;
+  uint32 max_cpu_percent = 2;
+  uint32 max_ram_percent = 3;
+  bool idle_only = 4;
+}
+
+message RegisterNodeResponse {
+  string node_id = 1;
+  bool accepted = 2;
+  string message = 3;
+}
+
+// ── Job Lifecycle ───────────────────────────
+
+message JobAssignment {
+  string job_id = 1;
+  string model_id = 2;
+  ShardDescriptor shard = 3;
+  bytes input_data = 4;  // Serialized prompt / activation vector
+  uint32 max_tokens = 5;
+  double temperature = 6;
+}
+
+message ShardDescriptor {
+  uint32 start_layer = 1;
+  uint32 end_layer = 2;
+  uint32 total_layers = 3;
+  string quantization = 4;  // "fp16", "int8", "int4"
+}
+
+message JobResult {
+  string job_id = 1;
+  string node_id = 2;
+  bytes output_data = 3;         // Generated tokens or activation vector
+  double compute_seconds = 4;
+  bytes verification_hash = 5;   // TOPLOC LSH hash (Phase 2)
+  bool success = 6;
+  string error_message = 7;
+}
+
+// ── Heartbeat ───────────────────────────────
+
+message Heartbeat {
+  string node_id = 1;
+  double available_ram_gb = 2;
+  double cpu_load_percent = 3;
+  uint32 active_jobs = 4;
+  uint64 timestamp_ms = 5;
+}

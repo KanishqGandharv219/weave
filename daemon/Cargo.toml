@@ -1,0 +1,22 @@
+[package]
+name = "weave-daemon"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Weave device client daemon — contributes idle compute to the network"
+
+[dependencies]
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+clap = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+sysinfo = "0.33"        # Device capability profiling
+
+[dev-dependencies]
+tokio-test = "0.4"

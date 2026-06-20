@@ -1,0 +1,75 @@
+# ═══════════════════════════════════════
+# Rust
+# ═══════════════════════════════════════
+/target/
+daemon/target/
+**/*.rs.bk
+Cargo.lock
+
+# ═══════════════════════════════════════
+# Python
+# ═══════════════════════════════════════
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ═══════════════════════════════════════
+# Node.js
+# ═══════════════════════════════════════
+node_modules/
+.next/
+.nuxt/
+dist/
+*.tsbuildinfo
+
+# ═══════════════════════════════════════
+# IDE
+# ═══════════════════════════════════════
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ═══════════════════════════════════════
+# Docker
+# ═══════════════════════════════════════
+docker-compose.override.yml
+
+# ═══════════════════════════════════════
+# Misc
+# ═══════════════════════════════════════
+*.log
+*.pid
+*.seed
+.env.local
+.env.*.local
+tmp/
+temp/
+
+# ═══════════════════════════════════════
+# Model weights (never commit)
+# ═══════════════════════════════════════
+*.bin
+*.safetensors
+*.gguf
+*.ggml
+models/

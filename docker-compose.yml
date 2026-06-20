@@ -1,0 +1,42 @@
+# ═══════════════════════════════════════
+# Weave — Development Stack
+# ═══════════════════════════════════════
+# docker-compose up → runs coordinator + postgres + (future: redis, dashboard)
+
+services:
+  # ── Postgres (Credit Ledger) ──────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: weave
+      POSTGRES_USER: weave
+      POSTGRES_PASSWORD: weave
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U weave"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Coordinator Service ───────────────
+  coordinator:
+    build:
+      context: ./coordinator
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      WEAVE_DATABASE_URL: postgresql+asyncpg://weave:weave@postgres:5432/weave
+      WEAVE_ENVIRONMENT: development
+      WEAVE_DEBUG: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./coordinator/src:/app/src  # Hot reload in dev
+
+volumes:
+  pgdata:

@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weave — Engineering Reference & Build Pipeline</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08090B;
+  --surface:#0E1013;
+  --surface2:#15171C;
+  --surface3:#1D2026;
+  --border:#222530;
+  --border2:#2E323F;
+  --text:#EDEFF3;
+  --text2:#8C92A3;
+  --text3:#4D5263;
+  --cyan:#3FD6E0;
+  --cyan-dim:rgba(63,214,224,0.10);
+  --cyan-glow:rgba(63,214,224,0.05);
+  --lime:#A3E635;
+  --lime-dim:rgba(163,230,53,0.10);
+  --amber:#F5A623;
+  --amber-dim:rgba(245,166,35,0.10);
+  --red:#FF6868;
+  --red-dim:rgba(255,104,104,0.10);
+  --violet:#9B8CFF;
+  --violet-dim:rgba(155,140,255,0.10);
+  --radius:14px;
+  --radius-sm:9px;
+  --radius-xs:6px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:0 24px 100px}
+
+/* HERO */
+.hero{padding:52px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--cyan-dim);border:1px solid rgba(63,214,224,0.22);padding:5px 13px;border-radius:20px;margin-bottom:18px;font-size:11.5px;font-weight:600;color:var(--cyan);letter-spacing:.07em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:bl 2.2s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.35}}
+h1.hero-name{font-family:'Space Grotesk',sans-serif;font-size:clamp(36px,6vw,58px);font-weight:700;letter-spacing:-.04em;line-height:1.05;margin-bottom:10px;background:linear-gradient(130deg,#EDEFF3 30%,#5C6478 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:16px;color:var(--text2);max-width:600px;line-height:1.65;margin-bottom:24px}
+.hero-sub strong{color:var(--text);font-weight:500}
+.pill-row{display:flex;flex-wrap:wrap;gap:9px}
+.pill{padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12.5px;display:flex;align-items:center;gap:6px}
+.pill .pv{font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--cyan)}
+.pill .pl{color:var(--text2)}
+
+/* TABS */
+.tab-bar{display:flex;flex-wrap:wrap;gap:3px;border-bottom:1px solid var(--border);margin-bottom:32px;position:sticky;top:0;background:var(--bg);padding:10px 0 0;z-index:20}
+.tab-btn{background:transparent;border:none;cursor:pointer;padding:8px 13px;border-radius:var(--radius-xs) var(--radius-xs) 0 0;font-size:12.5px;font-weight:500;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:'Inter',sans-serif;transition:color .15s,background .15s}
+.tab-btn:hover{color:var(--text);background:var(--surface)}
+.tab-btn.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tab-section{display:none}
+.tab-section.active{display:block}
+
+/* LABELS */
+.slabel{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-weight:600;font-family:'JetBrains Mono',monospace;margin:38px 0 16px}
+.slabel:first-child{margin-top:0}
+.slabel .count{color:var(--cyan);margin-left:6px}
+
+/* RESOURCE CARDS */
+.res-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:12px}
+.res-card.starred{border-color:rgba(163,230,53,0.35);background:linear-gradient(135deg,var(--lime-dim),var(--surface) 60%)}
+.res-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.res-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.res-name a{color:inherit;text-decoration:none;border-bottom:1px dotted var(--text3)}
+.res-name a:hover{color:var(--cyan);border-bottom-color:var(--cyan)}
+.star-badge{font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;background:var(--lime-dim);color:var(--lime);padding:2px 7px;border-radius:4px;letter-spacing:.05em}
+.res-tags{display:flex;gap:5px;flex-wrap:wrap}
+.res-tag{font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.04em;text-transform:uppercase}
+.rt-repo{background:var(--cyan-dim);color:var(--cyan)}
+.rt-paper{background:var(--violet-dim);color:var(--violet)}
+.rt-active{background:var(--lime-dim);color:var(--lime)}
+.rt-dead{background:var(--red-dim);color:var(--red)}
+.res-desc{font-size:13.5px;color:var(--text2);line-height:1.7;margin-bottom:8px}
+.res-borrow{font-size:12.5px;line-height:1.6;padding:8px 12px;background:var(--surface2);border-radius:var(--radius-xs);border-left:2px solid var(--cyan);color:var(--text2)}
+.res-borrow strong{color:var(--cyan);font-weight:600}
+.res-link-row{font-size:11.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:8px}
+.res-link-row a{color:var(--text3);text-decoration:none;border-bottom:1px dotted var(--border2)}
+.res-link-row a:hover{color:var(--cyan)}
+
+/* GROUP HEADER */
+.group-header{display:flex;align-items:center;gap:10px;margin:28px 0 12px}
+.group-header h3{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;color:var(--text)}
+.group-header .gh-line{flex:1;height:1px;background:var(--border)}
+.group-letter{width:22px;height:22px;border-radius:6px;background:var(--cyan-dim);color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* PRECEDENT TABLE */
+.prec-table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+.prec-table th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);font-family:'JetBrains Mono',monospace;font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left}
+.prec-table td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text2);font-size:12.5px;line-height:1.55}
+.prec-table tr:last-child td{border-bottom:none}
+.prec-table td:first-child{font-weight:600;color:var(--text);white-space:nowrap}
+.prec-table tr.hl td{background:var(--lime-dim)}
+.prec-table tr.hl td:first-child{color:var(--lime)}
+.status-chip{display:inline-block;font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 6px;border-radius:4px}
+.sc-active{background:var(--lime-dim);color:var(--lime)}
+.sc-stagnant{background:var(--red-dim);color:var(--red)}
+.sc-funded{background:var(--cyan-dim);color:var(--cyan)}
+.sc-niche{background:var(--amber-dim);color:var(--amber)}
+
+/* STACK TABLE */
+.stack-table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+.stack-table th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);font-family:'JetBrains Mono',monospace;font-weight:600;padding:9px 10px;border-bottom:1px solid var(--border);text-align:left}
+.stack-table td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text2);font-size:12.5px;line-height:1.6}
+.stack-table tr:last-child td{border-bottom:none}
+.stack-table td:first-child{font-weight:600;color:var(--text);width:22%}
+.stack-table td:nth-child(2){color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:12px;width:20%}
+.stack-table td:nth-child(4){color:var(--text3);font-size:11.5px;font-family:'JetBrains Mono',monospace}
+
+/* PIPELINE PHASES */
+.phase{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:18px;overflow:hidden}
+.phase-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:var(--surface2)}
+.phase-num{font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--cyan);font-weight:700;letter-spacing:.08em;margin-bottom:4px}
+.phase-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:var(--text)}
+.phase-time{font-size:12px;font-family:'JetBrains Mono',monospace;background:var(--cyan-dim);color:var(--cyan);padding:5px 12px;border-radius:20px;font-weight:600;white-space:nowrap}
+.phase-body{padding:20px 22px}
+.phase-goal{font-size:14px;color:var(--text);font-weight:500;line-height:1.6;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.phase-goal strong{color:var(--cyan)}
+.phase-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:680px){.phase-cols{grid-template-columns:1fr}}
+.phase-col-title{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:10px}
+.task-list{list-style:none}
+.task-list li{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px;padding-left:16px;position:relative}
+.task-list li::before{content:'→';position:absolute;left:0;color:var(--cyan);font-weight:700}
+.task-list li strong{color:var(--text);font-weight:500}
+.crit-list{list-style:none}
+.crit-list li{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px;padding-left:18px;position:relative}
+.crit-list li::before{content:'✓';position:absolute;left:0;color:var(--lime);font-weight:700;font-size:12px}
+.phase-refs{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:11.5px;font-family:'JetBrains Mono',monospace;color:var(--text3)}
+.phase-refs strong{color:var(--text2);font-weight:600}
+
+/* RISK ITEMS */
+.risk-item{display:flex;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px}
+.risk-sev{flex-shrink:0;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:4px;height:fit-content;white-space:nowrap}
+.rs-high{background:var(--red-dim);color:var(--red)}
+.rs-med{background:var(--amber-dim);color:var(--amber)}
+.rs-design{background:var(--cyan-dim);color:var(--cyan)}
+.risk-body h4{font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:4px}
+.risk-body p{font-size:12.5px;color:var(--text2);line-height:1.6}
+
+.divider{border:none;border-top:1px solid var(--border);margin:28px 0}
+code{background:var(--surface2);border:1px solid var(--border);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--lime)}
+.footnote{font-size:11.5px;color:var(--text3);line-height:1.8;border-top:1px solid var(--border);padding-top:20px;margin-top:44px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:14.5px;font-weight:600;color:var(--text);margin-bottom:8px}
+.card-body{font-size:13.5px;color:var(--text2);line-height:1.8}
+.card-body strong{color:var(--text);font-weight:500}
+.card.hl{border-color:rgba(163,230,53,0.3);background:linear-gradient(135deg,var(--lime-dim),var(--surface) 55%)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="eyebrow">Engineering Reference · Agent Briefing Document</div>
+  <h1 class="hero-name">Weave — Build Reference</h1>
+  <p class="hero-sub">
+    Everything an engineering agent needs before writing the first line of code: every relevant paper, every open-source repo worth studying or forking, every precedent product and the specific lesson it teaches, a recommended tech stack per layer, and a phased build pipeline with concrete timespans and acceptance criteria.
+  </p>
+  <div class="pill-row">
+    <div class="pill"><span class="pv">17</span><span class="pl">papers &amp; repos catalogued</span></div>
+    <div class="pill"><span class="pv">10</span><span class="pl">precedent products analyzed</span></div>
+    <div class="pill"><span class="pv">7</span><span class="pl">build phases, week 1 → 18mo+</span></div>
+    <div class="pill"><span class="pv">exo</span><span class="pl">closest existing solution — read first</span></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="sw('orient',this)">Orientation</button>
+  <button class="tab-btn" onclick="sw('research',this)">Research & Repos</button>
+  <button class="tab-btn" onclick="sw('precedents',this)">Precedents</button>
+  <button class="tab-btn" onclick="sw('stack',this)">Tech Stack</button>
+  <button class="tab-btn" onclick="sw('pipeline',this)">Build Pipeline</button>
+  <button class="tab-btn" onclick="sw('risks',this)">Risks & Open Qs</button>
+</div>
+
+<!-- ══════════════════════════════
+     TAB: ORIENTATION
+═══════════════════════════════ -->
+<div id="tab-orient" class="tab-section active">
+
+  <p class="slabel">Read this first</p>
+
+  <div class="card hl">
+    <div class="card-title">What this project is</div>
+    <div class="card-body">
+      Weave is a peer-to-peer compute network: idle consumer devices (laptops, desktops, eventually phones) contribute spare compute to run jobs — starting with AI inference — and earn credits they can spend on compute themselves. Think <strong>BitTorrent's reciprocity model applied to compute instead of files</strong>. The wedge use case is AI inference because it's embarrassingly parallel (each job is independent, no tight cross-device synchronization required to start generating revenue). The long-term vision is a general protocol layer for distributed consumer compute — rendering, simulation, eventually training — but the engineering plan below deliberately scopes phase 1–3 to the narrowest viable slice.
+    </div>
+  </div>
+
+  <div class="card hl">
+    <div class="card-title">The single most important fact before you start</div>
+    <div class="card-body">
+      <strong>A production-grade open-source project called <a href="https://github.com/exo-explore/exo" style="color:var(--lime)">exo</a> already solves the hardest sub-problem</strong> — dynamically partitioning a large model across heterogeneous consumer devices (a MacBook, a gaming PC, a Raspberry Pi) and running inference across them with automatic device discovery. It is local-network only, has no incentive layer, no WAN P2P, and no security model for untrusted third-party contributors. <strong>Don't reinvent this layer from scratch.</strong> Clone it, run it on two machines in week one, read its source for the partitioning/discovery logic, and build the missing pieces (WAN networking, credits, verification, sandboxing) on top or alongside it. This single decision can save 2-3 months of the build timeline.
+    </div>
+  </div>
+
+  <p class="slabel">Recommended reading order for the agent</p>
+  <div class="card">
+    <div class="card-body">
+      1. Run <code>exo</code> locally on two machines first — get hands-on with the core primitive before reading anything else.<br>
+      2. Read the <strong>Petals</strong> paper + repo — this is the WAN-scale version of what exo does locally, including the DHT peer-discovery pattern Weave needs.<br>
+      3. Read <strong>MDI-LLM</strong> — the cleanest description of activation-passing and shard-assignment between heterogeneous low-power nodes.<br>
+      4. Read <strong>TOPLOC</strong> — the verification layer; how to know a contributor actually did the compute correctly.<br>
+      5. Skim the <strong>Precedents</strong> tab in full — especially the Golem failure analysis. Every design decision in the Build Pipeline tab traces back to avoiding a specific failure mode documented there.<br>
+      6. Then proceed to the Tech Stack and Build Pipeline tabs.
+    </div>
+  </div>
+
+  <p class="slabel">Non-negotiable design constraints (derived from precedent failures)</p>
+  <div class="card">
+    <div class="card-body">
+      <strong>No cryptocurrency, no wallet requirement.</strong> Credits are an internal ledger entry, not a token. This is the single biggest factor separating SaladCloud's traction from Golem's decade of failure.<br><br>
+      <strong>AI inference first, general compute later.</strong> Don't build a general-purpose compute marketplace before proving the model on one embarrassingly-parallel, high-demand workload.<br><br>
+      <strong>Consumer product, not just a technical API.</strong> A device client real people install matters as much as the API developers integrate against.<br><br>
+      <strong>Desktop/laptop only at launch. No mobile promises in phase 1-4.</strong> iOS background compute is structurally near-impossible; Android is viable but adds complexity that should come after the core protocol is proven.
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════
+     TAB: RESEARCH & REPOS
+═══════════════════════════════ -->
+<div id="tab-research" class="tab-section">
+
+  <p class="slabel">Heterogeneous / distributed inference engines <span class="count">— the core technical primitive</span></p>
+
+  <div class="res-card starred">
+    <div class="res-head">
+      <div class="res-name"><a href="https://github.com/exo-explore/exo" target="_blank">exo</a><span class="star-badge">★ Read first</span></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">Production-grade open-source project: run your own AI cluster at home with everyday devices. Automatic dynamic model sharding across heterogeneous hardware (Mac via MLX, Linux/Nvidia via tinygrad, even Raspberry Pi), zero-config local network device discovery, ChatGPT-compatible API endpoint. Layers automatically partitioned proportional to each device's memory/compute. Can run 70B+ parameter models across a cluster no single device could handle alone.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> the dynamic partitioning/sharding algorithm and the multi-backend execution layer (MLX + tinygrad). What's missing that Weave must build: WAN-scale P2P (it's LAN-only today), an incentive/credit layer, and a security/sandboxing model for untrusted third-party nodes.</div>
+    <div class="res-link-row">github.com/exo-explore/exo</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://github.com/bigscience-workshop/petals" target="_blank">Petals</a></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-paper">paper</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">"Run LLMs at home, BitTorrent-style." Production system for pipeline-parallel inference and fine-tuning of LLMs over the open internet. Each peer hosts a few transformer blocks; a Kademlia-style DHT handles peer discovery and swarm formation; 8-bit (and 4-bit/NF4) quantization compresses activations passed between peers; built-in load balancing distributes blocks evenly across the swarm. Explicitly documents that hosting a server does not allow others to execute arbitrary code on your machine.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> the DHT peer-discovery pattern (this is the WAN equivalent of exo's local discovery), the activation quantization approach for low-bandwidth links, and the security framing for what a "host" can and can't do.</div>
+    <div class="res-link-row">github.com/bigscience-workshop/petals · ACL 2023 System Demonstrations paper</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://arxiv.org/abs/2505.18164" target="_blank">MDI-LLM</a></div>
+      <div class="res-tags"><span class="res-tag rt-paper">paper</span></div>
+    </div>
+    <div class="res-desc">"Model-Distributed Inference for Large Language Models at the Edge" (arXiv 2505.18164, May 2025). Introduces "recurrent pipeline parallelism" — partitions a model across low-power edge nodes that exchange intermediate activation vectors over device-to-device links, reducing per-device idle time and enabling parallel inference across multiple concurrent sequences. Validated on 3× Nvidia Jetson TX2 boards (8GB RAM each) over gigabit Ethernet, using TCP/IP sockets for coordination.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> the cleanest available description of the layer-to-node assignment problem and the activation-passing protocol between heterogeneous low-power devices — directly informs Weave's shard-assignment algorithm.</div>
+    <div class="res-link-row">arxiv.org/abs/2505.18164 — Macario, Seferoglu, Koyuncu (UIC)</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://github.com/b4rtaz/distributed-llama" target="_blank">distributed-llama</a></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">Lightweight C++ implementation of tensor-parallel LLM inference distributed across a home cluster of devices.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> a minimal, fast reference implementation of tensor parallelism if exo's Python stack proves too heavy for low-power contributor nodes.</div>
+    <div class="res-link-row">github.com/b4rtaz/distributed-llama</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://arxiv.org/abs/2504.08791" target="_blank">Prima.cpp</a></div>
+      <div class="res-tags"><span class="res-tag rt-paper">paper</span></div>
+    </div>
+    <div class="res-desc">"Fast 30-70B LLM Inference on Heterogeneous and Low-Resource Home Clusters" (arXiv 2504.08791). Targets exactly Weave's hardware reality: mixed clusters of phones, Raspberry Pis, laptops. Strong related-work section cataloguing the entire edge-inference ecosystem (llama.cpp, AirLLM, TPI-LLM, MLC-LLM, ktransformers, exo, distributed-llama).</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> use its references section as a secondary reading list — it's the most complete bibliography of the edge/heterogeneous inference space available.</div>
+    <div class="res-link-row">arxiv.org/abs/2504.08791</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://arxiv.org/abs/2410.00531" target="_blank">TPI-LLM</a></div>
+      <div class="res-tags"><span class="res-tag rt-paper">paper</span></div>
+    </div>
+    <div class="res-desc">"Serving 70B-scale LLMs Efficiently on Low-Resource Edge Devices" (arXiv 2410.00531). Tensor-parallel inference approach specifically optimized for memory-constrained edge hardware.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> memory-constraint optimization techniques for the lowest tier of contributor devices (older laptops, CPU-only machines).</div>
+    <div class="res-link-row">arxiv.org/abs/2410.00531</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://github.com/ggerganov/llama.cpp" target="_blank">llama.cpp</a> / <a href="https://github.com/mlc-ai/mlc-llm" target="_blank">MLC-LLM</a> / <a href="https://github.com/kvcache-ai/ktransformers" target="_blank">ktransformers</a></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">Single-node inference runtimes, already heavily optimized for consumer hardware (CPU, Apple Silicon, consumer GPU). These are the execution engines that run inside a single Weave shard — no need to write a custom inference kernel.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> use one of these as the per-node execution engine within each shard; don't write inference kernels from scratch.</div>
+    <div class="res-link-row">github.com/ggerganov/llama.cpp · github.com/mlc-ai/mlc-llm · github.com/kvcache-ai/ktransformers</div>
+  </div>
+
+  <div class="group-header"><div class="group-letter">B</div><h3>Video / diffusion-specific distributed inference</h3><div class="gh-line"></div></div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://arxiv.org/abs/2406.16260" target="_blank">Video-Infinity</a></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-paper">paper</span></div>
+    </div>
+    <div class="res-desc">"Distributed Long Video Generation" (arXiv 2406.16260). Introduces Clip Parallelism (splits a long video into clips processed across GPUs with minimal context-sharing overhead) and Dual-Scope Attention (balances local vs global temporal context). Generated 2,300 frames in ~5 minutes on 8× RTX 6000 Ada GPUs — 100x faster than prior methods.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> the clip-parallel decomposition strategy — directly relevant when Weave expands into video/rendering workloads in Phase 5.</div>
+    <div class="res-link-row">arxiv.org/abs/2406.16260 · github.com/Yuanshi9815/Video-Infinity</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://arxiv.org/abs/2603.06741" target="_blank">Heterogeneous Decentralized Diffusion Models</a></div>
+      <div class="res-tags"><span class="res-tag rt-paper">paper</span></div>
+    </div>
+    <div class="res-desc">arXiv 2603.06741 (Mar 2026). Decentralized training framework allowing diffusion model "experts" to use different objectives (DDPM, Flow Matching), unified at inference via deterministic schedule-aware conversion. Reduces training compute from 1,176 to 72 GPU-days (16x) relative to prior decentralized diffusion training work.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> a forward-looking reference for the long-term "federated training" phase (Phase 6) — not relevant to early phases.</div>
+    <div class="res-link-row">arxiv.org/abs/2603.06741</div>
+  </div>
+
+  <div class="group-header"><div class="group-letter">C</div><h3>Verification &amp; trust for untrusted compute</h3><div class="gh-line"></div></div>
+
+  <div class="res-card starred">
+    <div class="res-head">
+      <div class="res-name"><a href="https://github.com/PrimeIntellect-ai/toploc" target="_blank">TOPLOC</a><span class="star-badge">★ Verification layer</span></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-paper">paper</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">"A Locality Sensitive Hashing Scheme for Trustless Verifiable Inference" (arXiv 2501.16007, Prime Intellect). Compact LSH mechanism over intermediate activations detects unauthorized model/prompt/precision modifications with 100% accuracy in their empirical evaluation, zero false positives/negatives. 1000x storage reduction vs raw activation storage (258 bytes per 32 tokens vs 262KB). Robust across different GPU types and tensor-parallel configurations. Integrated with vLLM, forked into SGLang.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> this is the most directly applicable, production-ready answer to "how do I know a contributor's device actually ran the job correctly without re-running everything myself." Build Weave's verification layer directly on this.</div>
+    <div class="res-link-row">arxiv.org/abs/2501.16007 · github.com/PrimeIntellect-ai/toploc · github.com/PrimeIntellect-ai/toploc-experiments</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name">awesome-sandbox</div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">Curated list of code-sandboxing tools for AI/untrusted execution (e2b, microsandbox, and others). WebAssembly's security model is capability-based — a WASM module is inert by default with no filesystem, network, or host-memory access unless explicitly granted, and the runtime bounds-checks every memory access.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> reference list for evaluating sandbox runtimes when Phase 2 introduces untrusted third-party contributor nodes.</div>
+    <div class="res-link-row">github.com/restyler/awesome-sandbox</div>
+  </div>
+
+  <div class="group-header"><div class="group-letter">D</div><h3>Coordination &amp; task scheduling</h3><div class="gh-line"></div></div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://github.com/ray-project/ray" target="_blank">Ray</a></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">Distributed task-graph execution framework from UC Berkeley (RISELab). The task graph is constructed dynamically as the application runs — not a fixed DAG defined upfront — which fits a job-routing coordinator better than batch schedulers like Slurm.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> use as the coordinator's task scheduling substrate rather than building a custom scheduler from scratch.</div>
+    <div class="res-link-row">github.com/ray-project/ray · bair.berkeley.edu/blog/2018/01/09/ray</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://arxiv.org/abs/2511.21686" target="_blank">Matrix (P2P Multi-Agent Synthetic Data Generation)</a></div>
+      <div class="res-tags"><span class="res-tag rt-paper">paper</span></div>
+    </div>
+    <div class="res-desc">arXiv 2511.21686. Peer-to-peer framework where each task progresses independently through lightweight agents while compute-intensive operations (LLM inference, containerized environments) are handled by distributed services. Built on Ray; scales to tens of thousands of concurrent agentic workflows.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> the architectural pattern of separating lightweight coordination logic from heavy compute execution — directly informs the coordinator/worker split in Weave's design.</div>
+    <div class="res-link-row">arxiv.org/abs/2511.21686</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://arxiv.org/abs/2509.19855" target="_blank">CollaPipe</a></div>
+      <div class="res-tags"><span class="res-tag rt-paper">paper</span></div>
+    </div>
+    <div class="res-desc">"Adaptive Segment-Optimized Pipeline Parallelism for Collaborative LLM Training in Heterogeneous Edge Networks" (arXiv 2509.19855). Jointly optimizes model segment allocation, micro-batch size, bandwidth, and transmission power for mobile-edge pipeline-parallel training.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> the joint-optimization formulation (segments × bandwidth × power) — relevant once Weave's scheduler needs to optimize across more than just compute capability.</div>
+    <div class="res-link-row">arxiv.org/abs/2509.19855</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://github.com/PrimeIntellect-ai/protocol" target="_blank">Prime Intellect Protocol</a></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">Reference implementation (Rust) of a P2P compute protocol with workers, validators, and an orchestration layer. Powered Prime Intellect's distributed training runs (INTELLECT-2, SYNTHETIC-2).</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> the workers/validators/orchestrator separation of concerns as a reference architecture, even though Prime Intellect targets datacenter-grade nodes rather than consumer devices.</div>
+    <div class="res-link-row">github.com/PrimeIntellect-ai/protocol</div>
+  </div>
+
+  <div class="group-header"><div class="group-letter">E</div><h3>P2P networking infrastructure</h3><div class="gh-line"></div></div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://docs.libp2p.io" target="_blank">libp2p</a></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">Modular P2P networking stack originally built for IPFS, now used across the decentralized-systems ecosystem. Provides transport-agnostic dialing/listening, peer discovery, peer routing, content routing, GossipSub pub/sub messaging, and built-in NAT traversal (relay + hole punching). No need to pre-assign ports — peers discover each other dynamically.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> use directly as Weave's WAN networking layer — this is the production-grade equivalent of writing your own peer discovery and NAT traversal code, which you should not do from scratch.</div>
+    <div class="res-link-row">docs.libp2p.io · docs.ipfs.tech/concepts/libp2p</div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://docs.ipfs.tech" target="_blank">IPFS</a></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">Content-addressed, P2P distributed file system. Relevant if/when model weight distribution itself should be peer-to-peer (so contributor nodes don't all redundantly download multi-gigabyte model weights from Hugging Face Hub).</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> defer until Phase 4+; relevant once the contributor base is large enough that P2P weight distribution saves meaningful bandwidth cost vs a CDN.</div>
+    <div class="res-link-row">docs.ipfs.tech</div>
+  </div>
+
+  <div class="group-header"><div class="group-letter">F</div><h3>Volunteer computing precedent infrastructure</h3><div class="gh-line"></div></div>
+
+  <div class="res-card">
+    <div class="res-head">
+      <div class="res-name"><a href="https://github.com/BOINC/boinc" target="_blank">BOINC</a></div>
+      <div class="res-tags"><span class="res-tag rt-repo">repo</span><span class="res-tag rt-active">active</span></div>
+    </div>
+    <div class="res-desc">Berkeley Open Infrastructure for Network Computing. 20+ years in continuous production (originated from SETI@home), client-server volunteer-compute middleware, supports dozens of independent scientific projects, built-in credit system for contribution tracking.</div>
+    <div class="res-borrow"><strong>What to borrow:</strong> not the architecture (client-server, not true P2P) but the operational reliability patterns — work unit checkpointing, resumable jobs, and the credit-accounting approach for tracking volunteer contribution over years of uptime.</div>
+    <div class="res-link-row">github.com/BOINC/boinc · boinc.berkeley.edu</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════
+     TAB: PRECEDENTS
+═══════════════════════════════ -->
+<div id="tab-precedents" class="tab-section">
+
+  <p class="slabel">Precedent products — status &amp; the specific lesson each one teaches</p>
+
+  <div style="overflow-x:auto">
+  <table class="prec-table">
+    <thead><tr><th>Project</th><th>Status (mid-2026)</th><th>What it proves</th><th>What it's missing / the lesson</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Folding@home</td>
+        <td><span class="status-chip sc-active">Active</span></td>
+        <td>700K+ volunteers hit 2.43 exaFLOPS peak (Apr 2020) with zero economic incentive — pure altruism scales to supercomputer level.</td>
+        <td>Volatile without incentive: dropped to ~12.9 PFLOPS once COVID urgency faded. <strong style="color:var(--text)">Lesson: add real reciprocity to stabilize supply.</strong></td>
+      </tr>
+      <tr>
+        <td>BOINC / SETI@home</td>
+        <td><span class="status-chip sc-active">Active</span></td>
+        <td>20+ years of continuous operational viability for volunteer-compute middleware across dozens of scientific projects.</td>
+        <td>Client-server, not P2P. No economic layer. <strong style="color:var(--text)">Lesson: the reliability/checkpointing patterns are reusable; the architecture and incentive model are not.</strong></td>
+      </tr>
+      <tr>
+        <td>Golem (GLM)</td>
+        <td><span class="status-chip sc-stagnant">Stagnant</span></td>
+        <td>10 years of building, $8.6M raised at ICO. Proves the category attracts capital and engineering talent.</td>
+        <td>Zero protocol revenue. No commits to core repo since Oct 2025. Crypto-wallet-first UX, no killer use case, no consumer product, desktop-only. <strong style="color:var(--text)">Lesson: this is the anti-pattern to invert point-for-point.</strong></td>
+      </tr>
+      <tr>
+        <td>iExec / SONM</td>
+        <td><span class="status-chip sc-niche">Niche / dead</span></td>
+        <td>Blockchain-based compute marketplaces, similar vintage to Golem.</td>
+        <td>Same crypto-marketplace failure mode. <strong style="color:var(--text)">Lesson: confirms the pattern, not an isolated case.</strong></td>
+      </tr>
+      <tr class="hl">
+        <td>SaladCloud</td>
+        <td><span class="status-chip sc-active">Growing</span></td>
+        <td>60,000+ daily active consumer GPUs, real enterprise customers (Discord, Stability AI, Civitai), $0.02/hr pricing — 90% below hyperscalers. <strong style="color:var(--lime)">Proves the commercial model works.</strong></td>
+        <td>Windows + GPU only (excludes Mac, Linux, mobile, CPU-only devices). Rewards are gift cards, not compute reciprocity. No model sharding — one job needs one full GPU. <strong style="color:var(--text)">Lesson: the closest comparable; the gap it leaves is most of the addressable market.</strong></td>
+      </tr>
+      <tr>
+        <td>Akash Network</td>
+        <td><span class="status-chip sc-active">Active</span></td>
+        <td>Functioning decentralized cloud marketplace for datacenter-grade compute.</td>
+        <td>Token-based, targets datacenter GPUs not consumer devices. <strong style="color:var(--text)">Lesson: adjacent market, not a direct competitor for consumer idle compute.</strong></td>
+      </tr>
+      <tr>
+        <td>Render Network</td>
+        <td><span class="status-chip sc-niche">Niche</span></td>
+        <td>Validates frame-parallel rendering as a genuinely distributable consumer-GPU workload.</td>
+        <td>Token-based UX limits mainstream adoption. Rendering-only, no AI inference focus. <strong style="color:var(--text)">Lesson: good evidence for Phase 5 rendering expansion; bad UX template.</strong></td>
+      </tr>
+      <tr>
+        <td>Prime Intellect</td>
+        <td><span class="status-chip sc-funded">Funded $20M+</span></td>
+        <td>Founders Fund / Andrej Karpathy-backed validation that decentralized AI compute is fundable and technically real (INTELLECT-1/2/3, TOPLOC, shardcast).</td>
+        <td>Targets ML researchers and datacenter-grade nodes, not consumer devices or a consumer product. <strong style="color:var(--text)">Lesson: orthogonal, not competitive — and several of their published tools (TOPLOC, protocol repo) are directly reusable.</strong></td>
+      </tr>
+      <tr class="hl">
+        <td>exo</td>
+        <td><span class="status-chip sc-active">Active</span></td>
+        <td>Already solves heterogeneous device model partitioning with automatic local-network discovery, multi-backend (MLX/tinygrad) execution. <strong style="color:var(--lime)">The single closest technical precedent.</strong></td>
+        <td>LAN-only, no incentive layer, no security model for untrusted parties. <strong style="color:var(--text)">Lesson: don't rebuild this layer — extend it.</strong></td>
+      </tr>
+      <tr>
+        <td>io.net / vast.ai</td>
+        <td><span class="status-chip sc-active">Active</span></td>
+        <td>Functioning GPU rental marketplaces.</td>
+        <td>Professional/datacenter GPU rental, not idle-consumer-device P2P with reciprocity. <strong style="color:var(--text)">Lesson: different customer, different supply side.</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p class="slabel">The Golem post-mortem — read before designing anything</p>
+  <div class="card">
+    <div class="card-body">
+      Golem is the most important cautionary precedent in this space: ten years of development, $8.6M raised at ICO, 82% of token supply distributed to the community, and <strong>zero protocol revenue</strong>. Development on the core <code>yagna</code> repo shows no commits since October 2025. Four specific, identifiable causes, each directly actionable as a design constraint:<br><br>
+      <strong>1. Crypto-first UX</strong> — required a GLM token and a crypto wallet before a user could do anything. → Weave uses an internal credit ledger, no wallet, no token.<br>
+      <strong>2. No killer use case</strong> — general-purpose CGI rendering for a niche artist community never reached critical mass. → Weave leads with AI inference, a proven, high-demand, easy-to-price workload.<br>
+      <strong>3. Technical API, not a consumer product</strong> — Golem was built for developers integrating an API, with no consumer-facing app that made contribution easy or rewarding. → Weave ships a real device client with a real onboarding flow from day one.<br>
+      <strong>4. No mobile path, ever</strong> — desktop-only for its entire lifetime, missing the majority of idle compute that exists on phones. → Weave designs for an eventual Android path even though it launches desktop-only.
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════
+     TAB: TECH STACK
+═══════════════════════════════ -->
+<div id="tab-stack" class="tab-section">
+
+  <p class="slabel">Recommended stack, by architectural layer</p>
+
+  <div style="overflow-x:auto">
+  <table class="stack-table">
+    <thead><tr><th>Layer</th><th>Recommendation</th><th>Why</th><th>Reference</th></tr></thead>
+    <tbody>
+      <tr><td>P2P networking &amp; NAT traversal</td><td>libp2p</td><td>Battle-tested, modular, handles peer discovery/relay/hole-punching out of the box. Don't hand-roll this.</td><td>docs.libp2p.io</td></tr>
+      <tr><td>Local heterogeneous partitioning</td><td>Fork/study exo</td><td>Already solves dynamic model sharding across MLX/tinygrad/CUDA backends with automatic device-capability-proportional layer assignment.</td><td>exo-explore/exo</td></tr>
+      <tr><td>WAN pipeline-parallel pattern</td><td>Petals + MDI-LLM design</td><td>DHT-based peer discovery, 8-bit activation compression, recurrent pipeline parallelism for low-power nodes.</td><td>bigscience-workshop/petals, arXiv 2505.18164</td></tr>
+      <tr><td>Coordinator / task scheduling</td><td>Ray</td><td>Dynamic task graph (not a fixed DAG), proven at scale, already the substrate for the Matrix architecture pattern.</td><td>ray-project/ray</td></tr>
+      <tr><td>Verification layer</td><td>TOPLOC-style LSH spot-check</td><td>100% detection accuracy in published evals, 1000x storage reduction vs raw activations, robust to GPU non-determinism, already integrated with vLLM/SGLang.</td><td>PrimeIntellect-ai/toploc</td></tr>
+      <tr><td>Sandboxing untrusted jobs</td><td>WASM (wasmtime) for short stateless jobs; Firecracker/gVisor microVMs for heavier containerized jobs</td><td>Capability-based security — no filesystem/network access by default, memory-bounds-checked, neutralizes stack-smashing.</td><td>restyler/awesome-sandbox</td></tr>
+      <tr><td>Device client daemon</td><td>Lightweight Rust binary</td><td>Low overhead on contributor hardware, cross-platform, avoids Python runtime weight on resource-constrained nodes.</td><td>BOINC client as a reliability-pattern reference</td></tr>
+      <tr><td>Credit ledger</td><td>Postgres, double-entry accounting</td><td>No blockchain — directly avoids the adoption-killing UX problem documented in the Golem case study.</td><td>See Precedents tab</td></tr>
+      <tr><td>Developer API</td><td>FastAPI (Python) + Docker job submission</td><td>Familiar pattern for ML developers, mirrors Replicate/Modal's submission model.</td><td>—</td></tr>
+      <tr><td>Single-node inference runtime</td><td>llama.cpp / MLX / tinygrad, device-dependent</td><td>Already optimized for consumer hardware; no need to write custom inference kernels.</td><td>ggerganov/llama.cpp</td></tr>
+      <tr><td>Model weight distribution (later)</td><td>IPFS or simple CDN initially</td><td>Avoid every node redundantly downloading multi-GB weights from HF Hub once contributor count is large.</td><td>docs.ipfs.tech</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p class="slabel">Build-vs-borrow decision summary</p>
+  <div class="card">
+    <div class="card-body">
+      <strong>Borrow (don't rebuild):</strong> P2P networking (libp2p), local model partitioning logic (study exo's approach), single-node inference execution (llama.cpp/MLX/tinygrad), task scheduling substrate (Ray), verification primitive (TOPLOC).<br><br>
+      <strong>Build custom (the actual product):</strong> WAN-scale extension of exo's partitioning to untrusted internet peers, the credit ledger and incentive economics, the contributor onboarding/device-client UX, the developer-facing API and billing layer, the security/sandboxing wrapper around untrusted job execution, and the coordinator logic that ties scheduling + verification + payment together into one coherent job lifecycle.
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════
+     TAB: BUILD PIPELINE
+═══════════════════════════════ -->
+<div id="tab-pipeline" class="tab-section">
+
+  <p class="slabel">Full pipeline — phase by phase, week 1 through 18 months+</p>
+
+  <!-- PHASE 0 -->
+  <div class="phase">
+    <div class="phase-head">
+      <div><div class="phase-num">PHASE 0</div><div class="phase-title">Foundation &amp; Validation</div></div>
+      <div class="phase-time">Week 1–2</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-goal">Goal: <strong>get hands-on with the existing closest solution before designing anything</strong>, and make the one architectural decision that determines the rest of the timeline — build on exo or build from scratch.</div>
+      <div class="phase-cols">
+        <div>
+          <div class="phase-col-title">Tasks</div>
+          <ul class="task-list">
+            <li>Clone and run <strong>exo</strong> across two real machines (e.g. a MacBook + a Linux desktop). Get a 7-13B model running split across both.</li>
+            <li>Read the Petals paper + skim its source for the DHT peer-discovery implementation.</li>
+            <li>Read MDI-LLM and TOPLOC in full — these two papers most directly inform Phase 1-2 design.</li>
+            <li>Make and document the build-vs-fork decision for the partitioning engine (recommended: fork/extend exo's core, don't rewrite it).</li>
+            <li>Stand up repo structure, CI pipeline, and basic structured logging/telemetry from day one.</li>
+            <li>Define the single MVP workload precisely: one model (e.g. Llama-3.1-8B-Instruct or Mistral-7B), one task type (batch text generation, not interactive chat).</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phase-col-title">Success criteria</div>
+          <ul class="crit-list">
+            <li>exo runs successfully across 2 heterogeneous machines on your own network.</li>
+            <li>Written 1-page architecture decision record: fork exo vs build custom, with rationale.</li>
+            <li>Repo scaffolded with CI, the MVP model/workload chosen and documented.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase-refs"><strong>Primary references:</strong> exo-explore/exo, bigscience-workshop/petals, arXiv 2505.18164, arXiv 2501.16007</div>
+    </div>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div class="phase">
+    <div class="phase-head">
+      <div><div class="phase-num">PHASE 1</div><div class="phase-title">Two-Node WAN Proof of Concept</div></div>
+      <div class="phase-time">Week 3–8 (~Day 60)</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-goal">Goal: prove the core primitive works <strong>over the open internet between two devices you don't physically control together</strong> — not just on a LAN.</div>
+      <div class="phase-cols">
+        <div>
+          <div class="phase-col-title">Tasks</div>
+          <ul class="task-list">
+            <li>Extend exo's local partitioning logic to communicate over a libp2p transport instead of local network discovery — handle NAT traversal via libp2p relay/hole-punching.</li>
+            <li>Build a minimal coordinator service: job intake → node availability check → shard assignment → result return.</li>
+            <li>Implement a basic credit ledger (Postgres, double-entry, no blockchain) tracking compute-seconds contributed and consumed.</li>
+            <li>Run the two-node pipeline on physically separate networks (e.g. your laptop on home WiFi + a cloud VM, or two friends' machines in different cities).</li>
+            <li>Benchmark latency and throughput against SaladCloud and a standard cloud inference API (Replicate or similar) as baselines.</li>
+            <li>Container/process isolation for job execution — full untrusted-party sandboxing isn't required yet since you control both nodes, but build the interface so Phase 2 can slot in real sandboxing.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phase-col-title">Success criteria</div>
+          <ul class="crit-list">
+            <li>A text generation job completes successfully end-to-end across two devices on different physical networks.</li>
+            <li>Credit ledger correctly debits/credits both sides of a job.</li>
+            <li>Latency and cost benchmarks logged and compared against SaladCloud/cloud API baselines.</li>
+            <li>Architecture supports adding a third node without a rewrite.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase-refs"><strong>Primary references:</strong> docs.libp2p.io, bigscience-workshop/petals (DHT pattern), arXiv 2505.18164 (activation-passing protocol)</div>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase">
+    <div class="phase-head">
+      <div><div class="phase-num">PHASE 2</div><div class="phase-title">Heterogeneous Alpha — 5–10 nodes</div></div>
+      <div class="phase-time">Day 60–120 (Month 2–4)</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-goal">Goal: handle <strong>real heterogeneity and real failure</strong> — different hardware capabilities, nodes dropping mid-job, and the first untrusted (non-founder-controlled) contributor.</div>
+      <div class="phase-cols">
+        <div>
+          <div class="phase-col-title">Tasks</div>
+          <ul class="task-list">
+            <li>Build device capability profiling (CPU TFLOPS, RAM, GPU VRAM if present, bandwidth) reported at node registration.</li>
+            <li>Implement adaptive shard assignment proportional to device capability — directly modeled on MDI-LLM's layer-to-node assignment approach.</li>
+            <li>Fault tolerance: detect a dropped node mid-job and re-route to another available peer holding the same shard, or restart the job on a fresh allocation.</li>
+            <li>Verification v1: implement TOPLOC-style spot-check hashing on a sample of completed jobs to detect incorrect/tampered compute.</li>
+            <li>Add real sandboxing (WASM or microVM, per the Tech Stack tab) — this phase is the first time a node you don't personally control runs a real job.</li>
+            <li>Build a minimal web dashboard: node status, job queue depth, credit balances.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phase-col-title">Success criteria</div>
+          <ul class="crit-list">
+            <li>5–10 nodes across at least 3 distinct hardware profiles (CPU-only laptop, consumer GPU desktop, cloud VM reference node) successfully complete jobs.</li>
+            <li>A simulated node-drop mid-job is correctly detected and the job recovers without manual intervention.</li>
+            <li>TOPLOC-style verification flags at least one deliberately-injected incorrect result in testing.</li>
+            <li>At least one node operated by someone other than the founder(s) completes real jobs inside the sandbox.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase-refs"><strong>Primary references:</strong> arXiv 2505.18164, PrimeIntellect-ai/toploc, restyler/awesome-sandbox</div>
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase">
+    <div class="phase-head">
+      <div><div class="phase-num">PHASE 3</div><div class="phase-title">Closed Developer Beta</div></div>
+      <div class="phase-time">Month 4–6</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-goal">Goal: ship a <strong>real product surface</strong> — something a developer can integrate against and something a contributor can install and trust.</div>
+      <div class="phase-cols">
+        <div>
+          <div class="phase-col-title">Tasks</div>
+          <ul class="task-list">
+            <li>Public-facing API: Docker container job submission over REST, modeled on Replicate/Modal's developer experience.</li>
+            <li>Python SDK first, JavaScript SDK second.</li>
+            <li>Contributor desktop client with a real installer: macOS, Windows, Linux. Idle-detection logic (screen off + charging/plugged in + on WiFi, configurable).</li>
+            <li>Credit purchase flow (Stripe) for users who want compute without contributing hardware.</li>
+            <li>Expand model support to 2–3 models spanning text and image generation.</li>
+            <li>Security hardening pass: rate limiting, abuse detection, formalize the sandbox escape-prevention testing.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phase-col-title">Success criteria</div>
+          <ul class="crit-list">
+            <li>50–100 contributor nodes onboarded through the real installer (not founder-seeded test machines).</li>
+            <li>20–50 paying developer accounts actively submitting jobs through the API.</li>
+            <li>Zero security incidents during the closed beta window; sandbox escape testing documented and passed.</li>
+            <li>Median job latency and cost benchmarked publicly against SaladCloud and a major cloud API.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase-refs"><strong>Primary references:</strong> Replicate/Modal API design patterns, salad.com developer docs (study as a developer account holder)</div>
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase">
+    <div class="phase-head">
+      <div><div class="phase-num">PHASE 4</div><div class="phase-title">Public Beta &amp; Scale</div></div>
+      <div class="phase-time">Month 6–9</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-goal">Goal: open the doors and prove the network <strong>scales past the founder's social graph</strong>.</div>
+      <div class="phase-cols">
+        <div>
+          <div class="phase-col-title">Tasks</div>
+          <ul class="task-list">
+            <li>Open public contributor sign-up (remove invite-gate from Phase 3).</li>
+            <li>Add a node reputation/scoring system: uptime reliability × verification accuracy, feeding into job-routing priority.</li>
+            <li>Geographic-aware routing — co-locate shards regionally to reduce cross-device latency.</li>
+            <li>Expand workload types: introduce frame-parallel rendering as the second product vertical (per Video-Infinity's clip-parallel pattern).</li>
+            <li>Begin formal SOC2-track security practices given the larger, fully public attack surface.</li>
+            <li>Consider P2P weight distribution (IPFS) once redundant per-node model downloads become a meaningful bandwidth cost.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phase-col-title">Success criteria</div>
+          <ul class="crit-list">
+            <li>500–1,000 contributor nodes active.</li>
+            <li>Defined monthly revenue target hit (set based on Phase 3 actuals × growth assumption).</li>
+            <li>Reputation system measurably improves job success rate vs Phase 2 baseline.</li>
+            <li>Second workload vertical (rendering) live for at least a subset of beta users.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase-refs"><strong>Primary references:</strong> arXiv 2406.16260 (Video-Infinity, for the rendering vertical), Render Network as a market-validation precedent</div>
+    </div>
+  </div>
+
+  <!-- PHASE 5 -->
+  <div class="phase">
+    <div class="phase-head">
+      <div><div class="phase-num">PHASE 5</div><div class="phase-title">Platform Expansion</div></div>
+      <div class="phase-time">Month 9–18</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-goal">Goal: move from "AI inference network" to <strong>"general distributed compute protocol with multiple live verticals"</strong>.</div>
+      <div class="phase-cols">
+        <div>
+          <div class="phase-col-title">Tasks</div>
+          <ul class="task-list">
+            <li>Pipeline-parallel large-model serving (30-70B+) using the exo/Petals/MDI-LLM heterogeneous partitioning approach, now proven at WAN scale.</li>
+            <li>Android contributor path (idle compute via background service, respecting battery/thermal constraints — iOS deliberately deferred or skipped per the Risks tab).</li>
+            <li>Developer ecosystem: a marketplace of pre-built job templates beyond raw model inference.</li>
+            <li>Scientific compute / simulation vertical exploration, following the BOINC precedent for workload types that fit the embarrassingly-parallel constraint.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phase-col-title">Success criteria</div>
+          <ul class="crit-list">
+            <li>A 30B+ model served successfully across a heterogeneous WAN swarm with acceptable latency for batch use cases.</li>
+            <li>Android client live in at least a limited beta.</li>
+            <li>Thousands of active nodes; revenue and growth metrics positioned for a Series A conversation.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase-refs"><strong>Primary references:</strong> all of Tab "Research & Repos" Section A, BOINC's multi-project model</div>
+    </div>
+  </div>
+
+  <!-- PHASE 6 -->
+  <div class="phase">
+    <div class="phase-head">
+      <div><div class="phase-num">PHASE 6</div><div class="phase-title">Long-Term Protocol Vision</div></div>
+      <div class="phase-time">18 months+</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-goal">Goal: the hardest, longest-horizon capabilities — only pursue once the core network is proven, profitable, and resilient.</div>
+      <div class="phase-cols">
+        <div>
+          <div class="phase-col-title">Tasks</div>
+          <ul class="task-list">
+            <li>Federated/distributed training experiments — gradient communication across consumer nodes (significantly harder than inference; reference: Heterogeneous Decentralized Diffusion Models, arXiv 2603.06741).</li>
+            <li>Progressive decentralization of the coordinator itself, reducing the network's reliance on a single centralized scheduling service.</li>
+            <li>Multi-region redundancy for the coordination layer.</li>
+            <li>Revisit iOS feasibility as Apple's on-device ML/background execution frameworks evolve.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phase-col-title">Success criteria</div>
+          <ul class="crit-list">
+            <li>A defined, scoped training experiment (not full frontier-scale training) completes successfully across the distributed network.</li>
+            <li>Coordinator decentralization reduces single-point-of-failure risk, measured by network uptime during a coordinator outage drill.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase-refs"><strong>Primary references:</strong> arXiv 2603.06741, arXiv 2509.19855 (CollaPipe)</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════
+     TAB: RISKS & OPEN QUESTIONS
+═══════════════════════════════ -->
+<div id="tab-risks" class="tab-section">
+
+  <p class="slabel">Engineering risks to track throughout the build — not a one-time read</p>
+
+  <div class="risk-item">
+    <div class="risk-sev rs-high">High</div>
+    <div class="risk-body">
+      <h4>iOS background compute is structurally near-impossible</h4>
+      <p>Apple's Background App Refresh is throttled, user-disableable, and not designed for sustained compute workloads. Design the contributor base around desktop/laptop + eventual Android; do not plan for meaningful iPhone participation in any phase below 18 months, and even then treat it as exploratory.</p>
+    </div>
+  </div>
+
+  <div class="risk-item">
+    <div class="risk-sev rs-high">High</div>
+    <div class="risk-body">
+      <h4>One security incident with untrusted code execution is reputationally fatal</h4>
+      <p>Running containerized AI workloads on consumer devices contributed by strangers creates real attack surface — data leakage between jobs, container/sandbox escape, malicious job payloads. The sandboxing investment in Phase 2 must be genuinely solid before any node outside founder control runs a real job, not retrofitted after an incident.</p>
+    </div>
+  </div>
+
+  <div class="risk-item">
+    <div class="risk-sev rs-med">Medium</div>
+    <div class="risk-body">
+      <h4>Verification for non-deterministic/stochastic workloads remains research-stage</h4>
+      <p>TOPLOC handles deterministic-leaning verification well; fully verifying stochastic generation (sampling-based image/video output) is harder. Prime Intellect's TOPLOC v2 (reproducible Gumbel noise sampling) is in progress but not fully published as of this writing — track its release, don't assume it's solved yet.</p>
+    </div>
+  </div>
+
+  <div class="risk-item">
+    <div class="risk-sev rs-med">Medium</div>
+    <div class="risk-body">
+      <h4>Pipeline-parallel reliability compounds multiplicatively</h4>
+      <p>If a job requires N devices online simultaneously and each has uptime probability p, job success probability is p^N. At 90% per-device uptime, a 3-device pipeline succeeds ~73% of the time; a 5-device pipeline ~59%. Favor single-node batch jobs at launch (Phase 1-3); only introduce true multi-device pipeline-parallel serving (Phase 5) once fault-tolerant re-routing (Phase 2) is mature.</p>
+    </div>
+  </div>
+
+  <div class="risk-item">
+    <div class="risk-sev rs-med">Medium</div>
+    <div class="risk-body">
+      <h4>NAT traversal failure rate on real consumer ISPs / CGNAT</h4>
+      <p>A meaningful fraction of consumer connections sit behind carrier-grade NAT where direct P2P hole-punching fails. libp2p's relay fallback handles this but adds latency and routes traffic through relay infrastructure you'll need to provision and pay for. Budget for this in Phase 1 benchmarking, not as a later surprise.</p>
+    </div>
+  </div>
+
+  <div class="risk-item">
+    <div class="risk-sev rs-design">Design</div>
+    <div class="risk-body">
+      <h4>The Golem-pattern avoidance checklist — revisit at every major design decision</h4>
+      <p>No crypto wallet requirement, ever. Real, proven use case before generalizing. Ship a consumer product alongside the API, not instead of it. Keep a credible mobile path on the roadmap even while launching desktop-only. Any design proposal that violates one of these four should be treated as a red flag requiring explicit justification.</p>
+    </div>
+  </div>
+
+  <div class="risk-item">
+    <div class="risk-sev rs-design">Design</div>
+    <div class="risk-body">
+      <h4>Build-vs-borrow discipline</h4>
+      <p>The temptation to rewrite exo's partitioning logic, libp2p's networking, or TOPLOC's verification scheme from scratch "to understand it better" or "to fit our exact needs" should be resisted by default. Time spent reimplementing solved problems is time not spent on the actual differentiators: the incentive layer, the consumer product, and the trust/security model for a genuinely open contributor network.</p>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>Sources used to compile this reference:</strong><br>
+    exo-explore/exo · bigscience-workshop/petals (ACL 2023) · arXiv 2505.18164 (MDI-LLM) · arXiv 2501.16007 (TOPLOC) · arXiv 2406.16260 (Video-Infinity) · arXiv 2603.06741 (Heterogeneous Decentralized Diffusion Models) · arXiv 2511.21686 (Matrix) · arXiv 2509.19855 (CollaPipe) · arXiv 2504.08791 (Prima.cpp) · arXiv 2410.00531 (TPI-LLM) · b4rtaz/distributed-llama · ggerganov/llama.cpp · mlc-ai/mlc-llm · kvcache-ai/ktransformers · ray-project/ray · PrimeIntellect-ai/protocol · PrimeIntellect-ai/toploc · docs.libp2p.io · docs.ipfs.tech · restyler/awesome-sandbox · BOINC/boinc · Folding@home (Wikipedia) · SaladCloud (salad.com, AIChief 2026) · Golem (ownyourmind.ai, Mar 2026) · Prime Intellect funding (Sacra, primeintellect.ai)<br><br>
+    Compiled for Kanishq's Weave project — engineering reference for AI agent onboarding · June 2026
+  </div>
+
+</div>
+
+</div>
+<script>
+function sw(name,btn){
+  document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
