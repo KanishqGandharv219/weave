@@ -11,7 +11,7 @@ mod config;
 mod profiler;
 
 use clap::Parser;
-use tracing::{info, Level};
+use tracing::info;
 use tracing_subscriber::EnvFilter;
 
 /// Weave Device Daemon
