@@ -1,12 +1,13 @@
 """Coordinator test suite."""
 
 import pytest
+import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from weave_coordinator.main import app
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client():
     """Async HTTP test client for the coordinator API."""
     transport = ASGITransport(app=app)
